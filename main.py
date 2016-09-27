@@ -14,7 +14,7 @@ import numpy as np
 masterUI = tk.Tk()
 masterUI.title("Fermenter Controls")
 
-f = plt.figure(figsize=(2,1), dpi=100)
+f = plt.figure(figsize=(2.7,2), dpi=120)
 subplotTop = 111# 211
 
 class PlotData():
@@ -38,7 +38,7 @@ class PlotData():
     plt.subplot(self.subplot)
     self.lineDataTest = plt.plot(self.dataTest, 'rs', label='Plot Data')
     plt.ylim([self.ymin, self.ymax])
-    plt.legend(loc='upper left')
+    #plt.legend(loc='upper left')
 
   def updatePlotVals(self):
     """Update plot
