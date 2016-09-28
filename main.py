@@ -85,20 +85,24 @@ def stopProgram():
 # ----------------------------------------------------
 # Region to draw the plots
 canvas = FigureCanvasTkAgg(f, master=masterUI)
-canvas.get_tk_widget().grid(row=1, column=1, columnspan=2, rowspan=2)
+canvas.get_tk_widget().grid(row=1, column=1, columnspan=2, rowspan=10)
 # canvas.show()
 
 # ----------------------------------------------------
 # >>--------->> LABELS, SLIDERS, BUTTONS >>--------->>
 # ----------------------------------------------------
-tk.Label(masterUI, text="Plot Rate Control").grid(row=1, column=1)
+tk.Label(masterUI, text="Plot Rate Control").grid(row=1, column=3)
 #plotRateSlider = tk.Scale(masterUI, from_=0, to=255, orient=tk.HORIZONTAL, command=updatePlotRate)
-#plotRateSlider.grid(row=1, column=2)
-#plotRateSlider.set(60)
+#plotRateSlider.grid(row=1, column=3)
+#plotRateSlider.set(1000)
 
+plotRateEntry = tk.Entry(masterUI)
+plotRateEntry.insert(0, '1000')
+#plotRateEntry.bind('<Return>', lambda event: setPlotRateSlider())
+plotRateEntry.grid(row=2,column=3)
 
 stopButton = tk.Button(masterUI, text="Stop", width=5, command=stopProgram)
-stopButton.grid(row=2, column=3)
+stopButton.grid(row=10, column=3)
 
 
 # ----------------------------------------------------
