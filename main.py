@@ -69,13 +69,6 @@ def animatePlot(frameNum):
   testDataPlot.updatePlotVals()
   plt.draw()
 
-def updatePlotRate(i):
-  tempNum = 'num:03d'.format(num=plotRateSlider.get())
-
-#def setPlotRateSlider():
-#
-#def plotRate():
-#
 
 def increaseTens():
   numData = plotRateEntry.get()
@@ -129,31 +122,28 @@ canvas.get_tk_widget().grid(row=1, column=1, columnspan=2, rowspan=10)
 # >>--------->> LABELS, SLIDERS, BUTTONS >>--------->>
 # ----------------------------------------------------
 tk.Label(masterUI, text="Plot Rate Control").grid(row=1, column=3, columnspan=3)
-#plotRateSlider = tk.Scale(masterUI, from_=0, to=255, orient=tk.HORIZONTAL, command=updatePlotRate)
-#plotRateSlider.grid(row=1, column=3)
-#plotRateSlider.set(1000)
 
 plotRateEntry = tk.Entry(masterUI)
 plotRateEntry.insert(0, '70')
 #plotRateEntry.bind('<Return>', lambda event: setPlotRateSlider())
 plotRateEntry.grid(row=2,column=3, columnspan=3)
 
-tensButtonInc = tk.Button(masterUI, text='+10', width=1, command=increaseTens)
+tensButtonInc = tk.Button(masterUI, text='+10', width=4, command=increaseTens)
 tensButtonInc.grid(row=3, column=3)
 
-tensButtonDec = tk.Button(masterUI, text='-10', width=1, command=decreaseTens)
+tensButtonDec = tk.Button(masterUI, text='-10', width=4, command=decreaseTens)
 tensButtonDec.grid(row=4, column=3)
 
-onesButtonInc = tk.Button(masterUI, text='+1', width=1, command=increaseOnes)
+onesButtonInc = tk.Button(masterUI, text='+1', width=4, command=increaseOnes)
 onesButtonInc.grid(row=3, column=4)
 
-onesButtonDec = tk.Button(masterUI, text='-1', width=1, command=decreaseOnes)
+onesButtonDec = tk.Button(masterUI, text='-1', width=4, command=decreaseOnes)
 onesButtonDec.grid(row=4, column=4)
 
-pointOnesButtonInc = tk.Button(masterUI, text='+0.1', width=1, command=increasePointOnes)
+pointOnesButtonInc = tk.Button(masterUI, text='+0.1', width=4, command=increasePointOnes)
 pointOnesButtonInc.grid(row=3, column=5)
 
-pointOnesButtonDec = tk.Button(masterUI, text='-0.1', width=1, command=decreasePointOnes)
+pointOnesButtonDec = tk.Button(masterUI, text='-0.1', width=4, command=decreasePointOnes)
 pointOnesButtonDec.grid(row=4, column=5)
 
 stopButton = tk.Button(masterUI, text="Stop", command=stopProgram)
