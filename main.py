@@ -95,6 +95,24 @@ def increasePointOnes():
   plotRateEntry.delete(0, "end")
   plotRateEntry.insert(0, incData)
 
+def decreaseTens():
+  numData = plotRateEntry.get()
+  incData = str(float(numData)-10)
+  plotRateEntry.delete(0, "end")
+  plotRateEntry.insert(0, incData)
+
+def decreaseOnes():
+  numData = plotRateEntry.get()
+  incData = str(float(numData)-1)
+  plotRateEntry.delete(0, "end")
+  plotRateEntry.insert(0, incData)
+
+def decreasePointOnes():
+  numData = plotRateEntry.get()
+  incData = str(float(numData)-0.1)
+  plotRateEntry.delete(0, "end")
+  plotRateEntry.insert(0, incData)
+
 def stopProgram():
   masterUI.destroy()
   exit()
@@ -120,14 +138,23 @@ plotRateEntry.insert(0, '70')
 #plotRateEntry.bind('<Return>', lambda event: setPlotRateSlider())
 plotRateEntry.grid(row=2,column=3, columnspan=3)
 
-tensButton = tk.Button(masterUI, text='10\'s', width=1, command=increaseTens)
-tensButton.grid(row=3, column=3)
+tensButtonInc = tk.Button(masterUI, text='+10', width=1, command=increaseTens)
+tensButtonInc.grid(row=3, column=3)
 
-onesButton = tk.Button(masterUI, text='1\'s', width=1, command=increaseOnes)
-onesButton.grid(row=3, column=4)
+tensButtonDec = tk.Button(masterUI, text='-10', width=1, command=decreaseTens)
+tensButtonDec.grid(row=4, column=3)
 
-pointOnesButton = tk.Button(masterUI, text='0.1\'s', width=1, command=increasePointOnes)
-pointOnesButton.grid(row=3, column=5)
+onesButtonInc = tk.Button(masterUI, text='+1', width=1, command=increaseOnes)
+onesButtonInc.grid(row=3, column=4)
+
+onesButtonDec = tk.Button(masterUI, text='-1', width=1, command=decreaseOnes)
+onesButtonDec.grid(row=4, column=4)
+
+pointOnesButtonInc = tk.Button(masterUI, text='+0.1', width=1, command=increasePointOnes)
+pointOnesButtonInc.grid(row=3, column=5)
+
+pointOnesButtonDec = tk.Button(masterUI, text='-0.1', width=1, command=decreasePointOnes)
+pointOnesButtonDec.grid(row=4, column=5)
 
 stopButton = tk.Button(masterUI, text="Stop", command=stopProgram)
 stopButton.grid(row=10, column=3, columnspan=3)
