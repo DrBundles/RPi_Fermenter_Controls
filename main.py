@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Imports for plotting
 import matplotlib
 matplotlib.use('TkAgg') #Needed to make matplotlib work in unix / anaconda virtual env
@@ -17,14 +19,17 @@ masterUI.title("Fermenter Controls")
 f = plt.figure(figsize=(2.7,2), dpi=120)
 subplotTop = 111# 211
 
-class TempSensor():
-  """DS18B20 temperature sensor data"""
-  def __init__(self, base_dir, device_folder):
-    """Constructor for TempSensor Class
+# -----------------------------------------------------------
+# Import DS18B20 python library and setup sensors
+# -----------------------------------------------------------
+from w1thermsensor import W1ThermSensor
+# Get ID of DS18B20 sensor(s)
+THERM_ID = W1ThermSensor.get_available_sensors([W1ThermSensor.THERM_SENSOR_DS18B20])[0].id
+# Create a W1ThermSensor object
+sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, THERM_ID)
+# Get temperatures in Celsius:   sensor.get_temperature()
+# Get temperatures in Farenheit: sensor.get_temperature(W1ThermSensor.DEGREES_F)
 
-    Args:
-      base_dir (string): Where are devices located on system
-                         default: '/sys/bus/w1/devices/'
 
 class PlotData():
   """Store and format data for subsequent plotting
@@ -72,9 +77,10 @@ def animatePlot(frameNum):
   Args:
     frameNum (automatically assigned by mainloop method)
   """
-  import random
+  #import random
   #testDataPlot.dataNew = [random.gauss(15, 1.4)]
-  testDataPlot.dataNew = [random.gauss(float(plotRateEntry.get()), 1.4)]
+  #testDataPlot.dataNew = [random.gauss(float(plotRateEntry.get()), 1.4)]
+  testDataPlot.dataNew = sensor.get_temperature()
   testDataPlot.updatePlotVals()
   plt.draw()
 
