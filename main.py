@@ -58,7 +58,8 @@ class PlotData():
     """Update plot
     """
     plt.subplot(self.subplot)
-    self.dataTest.append(float(self.dataNew[0])) # Add new data to end of existing data array
+    #self.dataTest.append(float(self.dataNew[0])) # Add new data to end of existing data array
+    self.dataTest.append(float(self.dataNew)) # Add new data to end of existing data array
     del self.dataTest[0] # Drop the first array element
     self.ymin = float(min(self.dataTest)-10)
     self.ymax = float(max(self.dataTest)+10)
