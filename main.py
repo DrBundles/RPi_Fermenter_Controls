@@ -17,6 +17,15 @@ masterUI.title("Fermenter Controls")
 f = plt.figure(figsize=(2.7,2), dpi=120)
 subplotTop = 111# 211
 
+class TempSensor():
+  """DS18B20 temperature sensor data"""
+  def __init__(self, base_dir, device_folder):
+    """Constructor for TempSensor Class
+
+    Args:
+      base_dir (string): Where are devices located on system
+                         default: '/sys/bus/w1/devices/'
+
 class PlotData():
   """Store and format data for subsequent plotting
   """
