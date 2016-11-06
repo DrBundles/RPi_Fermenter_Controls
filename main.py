@@ -13,6 +13,8 @@ import tkinter as tk
 import numpy as np
 
 # Import PID
+import sys
+sys.path.insert(0, './ivPID')
 import PID
 
 # make the masterUI UI
@@ -104,7 +106,16 @@ def animatePlot(frameNum):
   #import random
   #testDataPlot.dataNew = [random.gauss(15, 1.4)]
   #testDataPlot.dataNew = [random.gauss(float(plotRateEntry.get()), 1.4)]
-  testDataPlot.dataNew = sensor.get_temperature()
+
+  global pid
+
+  # Get temperature value
+  tempVal = sensor.get_temperature()
+
+  # Update PID
+  pid.update(tempVal)
+
+  testDataPlot.dataNew = tempVal
   testDataPlot.updatePlotVals()
   plt.draw()
 
@@ -192,6 +203,7 @@ stopButton.grid(row=10, column=3, columnspan=3)
 # >>------------->> PID SETUP >>-------------------->>
 # ----------------------------------------------------
 # Create PID object
+pid = temperature_pid_setup()
 
 # ----------------------------------------------------
 # >>--------->> MAIN PLOTTING AREA >>--------------->>
