@@ -12,6 +12,9 @@ import matplotlib.animation as animation
 import tkinter as tk
 import numpy as np
 
+# Import PID
+import PID
+
 # make the masterUI UI
 masterUI = tk.Tk()
 masterUI.title("Fermenter Controls")
@@ -68,7 +71,27 @@ class PlotData():
     self.lineDataTest[0].set_ydata(self.dataTest)
 
 
+
+
+# ------------------------------------------
+# Code for Temperature Control PID
+# ------------------------------------------
+def temperature_pid_setup(P = 0.2, I = 0.0, D = 0.0):
+  """Temperature Control PID class
+
+  """
+  pid = PID.PID(P, I, D)
+  
+  pid.SetPoint=0.0
+  pid.setSampleTime(0.1)
+
+  return pid
+
+
+
+# ------------------------------------------
 # Code to animate plot
+# ------------------------------------------
 def animatePlot(frameNum):
   """Update data in PlotData objects and draw plot
 
@@ -165,6 +188,10 @@ pointOnesButtonDec.grid(row=4, column=5)
 stopButton = tk.Button(masterUI, text="Stop", command=stopProgram)
 stopButton.grid(row=10, column=3, columnspan=3)
 
+# ----------------------------------------------------
+# >>------------->> PID SETUP >>-------------------->>
+# ----------------------------------------------------
+# Create PID object
 
 # ----------------------------------------------------
 # >>--------->> MAIN PLOTTING AREA >>--------------->>
