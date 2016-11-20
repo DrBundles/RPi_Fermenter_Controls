@@ -12,11 +12,6 @@ import matplotlib.animation as animation
 import tkinter as tk
 import numpy as np
 
-# Import PID
-#import sys
-#sys.path.insert(0, './ivPID')
-#import PID
-
 # make the masterUI UI
 masterUI = tk.Tk()
 masterUI.title("Fermenter Controls")
@@ -78,23 +73,40 @@ class PlotData():
 # ------------------------------------------
 # Code for Temperature Control
 # ------------------------------------------
-def temperature_setup():
-  """Temperature Control PID class
+def temperature_control():
+  """Temperature Control class
 
   """
-  def __init__(self, init_temp):
+  def __init__(self, init_temp, lowOffset = 2, highOffset = 2):
     """Constructor for PlotData Class
 
     Args:
       initTemp (float): Initial temperature value
+      lowOffset (float): Low temperature offset below which system heats
+      highOffset (float): High temperature offset above which system cools
     """
 
     self.tempSetpoint = initTemp
+    self.lowOffset = lowOffset
+    self.highOffset = highOffset
     self.tempBuffer = np.zeros(10)
     self.tempBuffer = np.fill(self.tempSetpoint)
   
   def meanTemp():
-    self.meanTemp
+    self.meanTemp = np.mean(self.tempBuffer)
+
+  def updateTemp():
+    # Get temperature value
+    tempVal = sensor.get_temperature()
+    # Shift temperature buffer of index 9 is not index 0 
+    self.tempBuffer = np.roll(self.tempBuffer, 1)
+    # Push temperature value into ring buffer
+    self.tempBuffer[0] = tempVal
+
+  def heatCool():
+    # Check if the system is in a state that requires heating, cooling or standby
+    START HERE
+
 
   def updatePlotVals(self):
     """Update plot
@@ -119,13 +131,11 @@ def animatePlot(frameNum):
   #testDataPlot.dataNew = [random.gauss(15, 1.4)]
   #testDataPlot.dataNew = [random.gauss(float(plotRateEntry.get()), 1.4)]
 
-  global pid
-
   # Get temperature value
   tempVal = sensor.get_temperature()
 
-  # Update PID
-  pid.update(tempVal)
+  # Update temperature ring buffers
+  #pid.update(tempVal)
 
   testDataPlot.dataNew = tempVal
   testDataPlot.updatePlotVals()
@@ -210,12 +220,6 @@ pointOnesButtonDec.grid(row=4, column=5)
 
 stopButton = tk.Button(masterUI, text="Stop", command=stopProgram)
 stopButton.grid(row=10, column=3, columnspan=3)
-
-# ----------------------------------------------------
-# >>------------->> PID SETUP >>-------------------->>
-# ----------------------------------------------------
-# Create PID object
-pid = temperature_pid_setup()
 
 # ----------------------------------------------------
 # >>--------->> MAIN PLOTTING AREA >>--------------->>
