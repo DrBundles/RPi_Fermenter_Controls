@@ -13,9 +13,9 @@ import tkinter as tk
 import numpy as np
 
 # Import PID
-import sys
-sys.path.insert(0, './ivPID')
-import PID
+#import sys
+#sys.path.insert(0, './ivPID')
+#import PID
 
 # make the masterUI UI
 masterUI = tk.Tk()
@@ -76,18 +76,30 @@ class PlotData():
 
 
 # ------------------------------------------
-# Code for Temperature Control PID
+# Code for Temperature Control
 # ------------------------------------------
-def temperature_pid_setup(P = 0.2, I = 0.0, D = 0.0):
+def temperature_setup():
   """Temperature Control PID class
 
   """
-  pid = PID.PID(P, I, D)
-  
-  pid.SetPoint=0.0
-  pid.setSampleTime(0.1)
+  def __init__(self, init_temp):
+    """Constructor for PlotData Class
 
-  return pid
+    Args:
+      initTemp (float): Initial temperature value
+    """
+
+    self.tempSetpoint = initTemp
+    self.tempBuffer = np.zeros(10)
+    self.tempBuffer = np.fill(self.tempSetpoint)
+  
+  def meanTemp():
+    self.meanTemp
+
+  def updatePlotVals(self):
+    """Update plot
+    """
+    self.dataTest.append(float(self.dataNew)) # Add new data to end of existing data array
 
 
 
