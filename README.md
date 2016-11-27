@@ -3,6 +3,13 @@
 * lsvirtualenv
 * workon touch
 
+## RPi.GPIO
+* Outside virtual env
+* sudo apt-get install python-dev python-rpi.gpio
+* Now import RPi.GPIO should work on python ide, but will not yet work in virtual env
+* Inside virtual env
+* pip install rpi.gpio
+
 ## Using Wiring Pi
 * man gpio
 * wiringpi.com/pins - shows which gpio pin is connected to which WiringPi pin numher

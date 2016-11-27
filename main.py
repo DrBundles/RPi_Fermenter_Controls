@@ -31,6 +31,15 @@ sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, THERM_ID)
 # Get temperatures in Farenheit: sensor.get_temperature(W1ThermSensor.DEGREES_F)
 
 
+# -----------------------------------------------------------
+# Import RPi GPIO library
+# -----------------------------------------------------------
+import RPi.GPIO as GPIO
+import time # needed?
+GPIO.setmode(GPIO.BCM)
+
+
+
 class PlotData():
   """Store and format data for subsequent plotting
   """
@@ -77,7 +86,7 @@ def temperature_control():
   """Temperature Control class
 
   """
-  def __init__(self, init_temp, lowOffset = 2, highOffset = 2):
+  def __init__(self, init_temp, lowOffset = 0.2, highOffset = 0.2, lowTrigger = 2, highTrigger = 2):
     """Constructor for PlotData Class
 
     Args:
@@ -87,11 +96,26 @@ def temperature_control():
     """
 
     self.tempSetpoint = initTemp
-    self.lowOffset = lowOffset
-    self.highOffset = highOffset
-    self.tempBuffer = np.zeros(10)
+    self.lowOffset = lowTrigger     #Temperature offset needed to turn on heater
+    self.highOffset = highTrigger   #Temperature offset needed to turn on cooler
+    self.lowOffset = lowOffset      #Temperature overshoot of cooling
+    self.highOffset = highOffset    #Temperature overshoot of heating
+    self.tempBuffer = np.zeros(10)  #Ring buffer to hold temperature measurements
     self.tempBuffer = np.fill(self.tempSetpoint)
+    self.heat_cool_FLAG = 1         #0: Cooling, 1: Heating
+    # Setup GPIO
+    self.heatingpin = 23            #Heating relay pin on gpio BCM-23, wiringPi-4
+    self.coolingpin = 24            #Cooling relay pin on gpio BCM-24, wiringPi-5
+    GPIO.setup(self.coolingpin, GPIO.OUT) #Cooling pin set to output
+    GPIO.setup(self.heatingpin, GPIO.OUT) #Heating pin set to output
+    self.standbyMode()
+
   
+  def standbyMode():
+    # Turn both heating and cooling off
+    GPIO.output(coolingpin, GPIO.LOW)
+    GPIO.output(heatingpin, GPIO.LOW)
+
   def meanTemp():
     self.meanTemp = np.mean(self.tempBuffer)
 
@@ -105,7 +129,22 @@ def temperature_control():
 
   def heatCool():
     # Check if the system is in a state that requires heating, cooling or standby
-    START HERE
+    if self.meanTemp <= self.tempSetpoint - self.lowTrigger:
+      # Turn on Heater
+      self.heat_cool_FLAG = 1
+    elif self.meanTemp >= self.tempSetpoint + self.highTrigger:
+      # Turn on Cooler
+      self.heat_cool_FLAG = 0;
+    elif self.meanTemp >= self.tempSetpoint - self.lowOffset and self.heat_cool_FLAG = 0 :
+      # Temperature has cooled to a point lower to the setpoint minus the offset
+      # Place system into standby mode
+      self.standbyMode()
+    elif self.meanTemp <= self.tempSetpoint + self.highOffset and self.heat_cool_FLAG = 1 :
+      # Temperature has heated to a point higher to the setpoint plus the offset
+      # Place system into standby mode
+      self.standbyMode()
+    else:
+      pass
 
 
   def updatePlotVals(self):
