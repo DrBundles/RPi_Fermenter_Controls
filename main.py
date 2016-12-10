@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# For debugging
+import pdb
+#pdb.set_trace()
+
 # Imports for plotting
 import matplotlib
 matplotlib.use('TkAgg') #Needed to make matplotlib work in unix / anaconda virtual env
@@ -23,12 +27,6 @@ subplotTop = 111# 211
 # Import DS18B20 python library and setup sensors
 # -----------------------------------------------------------
 from w1thermsensor import W1ThermSensor
-# Get ID of DS18B20 sensor(s)
-THERM_ID = W1ThermSensor.get_available_sensors([W1ThermSensor.THERM_SENSOR_DS18B20])[0].id
-# Create a W1ThermSensor object
-sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, THERM_ID)
-# Get temperatures in Celsius:   sensor.get_temperature()
-# Get temperatures in Farenheit: sensor.get_temperature(W1ThermSensor.DEGREES_F)
 
 
 # -----------------------------------------------------------
@@ -82,17 +80,20 @@ class PlotData():
 # ------------------------------------------
 # Code for Temperature Control
 # ------------------------------------------
-def temperature_control():
+class TemperatureControl():
   """Temperature Control class
 
   """
-  def __init__(self, init_temp, lowOffset = 0.2, highOffset = 0.2, lowTrigger = 2, highTrigger = 2):
+  def __init__(self, initTemp, lowTrigger = 2, highTrigger = 2, lowOffset = 0.2, highOffset = 0.2):
     """Constructor for PlotData Class
 
     Args:
       initTemp (float): Initial temperature value
-      lowOffset (float): Low temperature offset below which system heats
-      highOffset (float): High temperature offset above which system cools
+      lowTrigger (float): Low temperature offset below which system heats
+      highTrigger (float): High temperature offset above which system cools
+      lowOffset (float): Low temperature hysteresis offset below which system goes to standby
+      highOffset (float): High temperature hysteresis offset above which system goes to standby
+      lowTrigger (float): 
     """
 
     self.tempSetpoint = initTemp
@@ -101,25 +102,51 @@ def temperature_control():
     self.lowOffset = lowOffset      #Temperature overshoot of cooling
     self.highOffset = highOffset    #Temperature overshoot of heating
     self.tempBuffer = np.zeros(10)  #Ring buffer to hold temperature measurements
-    self.tempBuffer = np.fill(self.tempSetpoint)
+    self.tempBuffer.fill(self.tempSetpoint)
     self.heat_cool_FLAG = 1         #0: Cooling, 1: Heating
+    # Setup temp sensors
+    self.sensor = self.setup_temp_sensors()
     # Setup GPIO
     self.heatingpin = 23            #Heating relay pin on gpio BCM-23, wiringPi-4
     self.coolingpin = 24            #Cooling relay pin on gpio BCM-24, wiringPi-5
+    #pdb.set_trace()
     GPIO.setup(self.coolingpin, GPIO.OUT) #Cooling pin set to output
     GPIO.setup(self.heatingpin, GPIO.OUT) #Heating pin set to output
-    self.standbyMode()
+    self.standby_mode()
 
+  def setup_temp_sensors(self):
+    # Get ID of DS18B20 sensor(s)
+    THERM_ID = W1ThermSensor.get_available_sensors([W1ThermSensor.THERM_SENSOR_DS18B20])[0].id
+    # Create a W1ThermSensor object
+    sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, THERM_ID)
+    # Get temperatures in Celsius:   sensor.get_temperature()
+    # Get temperatures in Farenheit: sensor.get_temperature(W1ThermSensor.DEGREES_F)
+    return sensor
   
-  def standbyMode():
+  def standby_mode(self):
     # Turn both heating and cooling off
     GPIO.output(coolingpin, GPIO.LOW)
     GPIO.output(heatingpin, GPIO.LOW)
+    self.heat_cool_FLAG = 'standby'
 
-  def meanTemp():
-    self.meanTemp = np.mean(self.tempBuffer)
+  def heat_on(self):
+    # Turn off cooler
+    # Turn on heater
+    GPIO.output(coolingpin, GPIO.LOW)
+    GPIO.output(heatingpin, GPIO.HIGH)
+    self.heat_cool_FLAG = 'heating'
 
-  def updateTemp():
+  def cool_on(self):
+    # Turn on cooler
+    # Turn off heater
+    GPIO.output(coolingpin, GPIO.HIGH)
+    GPIO.output(heatingpin, GPIO.LOW)
+    self.heat_cool_FLAG = 'cooling'
+
+  def mean_temp(self):
+    self.mean_temp = np.mean(self.tempBuffer)
+
+  def update_temp(self):
     # Get temperature value
     tempVal = sensor.get_temperature()
     # Shift temperature buffer of index 9 is not index 0 
@@ -127,25 +154,24 @@ def temperature_control():
     # Push temperature value into ring buffer
     self.tempBuffer[0] = tempVal
 
-  def heatCool():
+  def heat_cool_logic(self):
     # Check if the system is in a state that requires heating, cooling or standby
-    if self.meanTemp <= self.tempSetpoint - self.lowTrigger:
+    if self.mean_temp <= self.tempSetpoint - self.lowTrigger:
       # Turn on Heater
-      self.heat_cool_FLAG = 1
-    elif self.meanTemp >= self.tempSetpoint + self.highTrigger:
+      self.heat_on()
+    elif self.mean_temp >= self.tempSetpoint + self.highTrigger:
       # Turn on Cooler
-      self.heat_cool_FLAG = 0;
-    elif self.meanTemp >= self.tempSetpoint - self.lowOffset and self.heat_cool_FLAG = 0 :
+      self.cool_on()
+    elif self.mean_temp <= self.tempSetpoint - self.lowOffset and self.heat_cool_FLAG is 'cooling' :
       # Temperature has cooled to a point lower to the setpoint minus the offset
       # Place system into standby mode
-      self.standbyMode()
-    elif self.meanTemp <= self.tempSetpoint + self.highOffset and self.heat_cool_FLAG = 1 :
+      self.standby_mode()
+    elif self.mean_temp >= self.tempSetpoint + self.highOffset and self.heat_cool_FLAG is 'heating' :
       # Temperature has heated to a point higher to the setpoint plus the offset
       # Place system into standby mode
-      self.standbyMode()
+      self.standby_mode()
     else:
       pass
-
 
   def updatePlotVals(self):
     """Update plot
@@ -157,18 +183,18 @@ def temperature_control():
 # ------------------------------------------
 # Code to animate plot
 # ------------------------------------------
-def animatePlot(frameNum):
+def AnimatePlot(frameNum):
   """Update data in PlotData objects and draw plot
 
-  animatePlot runs in the masterUI.mainloop() method. The interval for running the animatePlot method
-  is set in the call "ani = animation.FuncAnimation(f, animatePlot, interval=1000)"
+  AnimatePlot runs in the masterUI.mainloop() method. The interval for running the AnimatePlot method
+  is set in the call "ani = animation.FuncAnimation(f, AnimatePlot, interval=1000)"
 
   Args:
     frameNum (automatically assigned by mainloop method)
   """
   #import random
   #testDataPlot.dataNew = [random.gauss(15, 1.4)]
-  #testDataPlot.dataNew = [random.gauss(float(plotRateEntry.get()), 1.4)]
+  #testDataPlot.dataNew = [random.gauss(float(temperatureSP.get()), 1.4)]
 
   # Get temperature value
   tempVal = sensor.get_temperature()
@@ -182,40 +208,40 @@ def animatePlot(frameNum):
 
 
 def increaseTens():
-  numData = plotRateEntry.get()
+  numData = temperatureSP.get()
   incData = str(float(numData)+10)
-  plotRateEntry.delete(0, "end")
-  plotRateEntry.insert(0, incData)
+  temperatureSP.delete(0, "end")
+  temperatureSP.insert(0, incData)
 
 def increaseOnes():
-  numData = plotRateEntry.get()
+  numData = temperatureSP.get()
   incData = str(float(numData)+1)
-  plotRateEntry.delete(0, "end")
-  plotRateEntry.insert(0, incData)
+  temperatureSP.delete(0, "end")
+  temperatureSP.insert(0, incData)
 
 def increasePointOnes():
-  numData = plotRateEntry.get()
+  numData = temperatureSP.get()
   incData = str(float(numData)+0.1)
-  plotRateEntry.delete(0, "end")
-  plotRateEntry.insert(0, incData)
+  temperatureSP.delete(0, "end")
+  temperatureSP.insert(0, incData)
 
 def decreaseTens():
-  numData = plotRateEntry.get()
+  numData = temperatureSP.get()
   incData = str(float(numData)-10)
-  plotRateEntry.delete(0, "end")
-  plotRateEntry.insert(0, incData)
+  temperatureSP.delete(0, "end")
+  temperatureSP.insert(0, incData)
 
 def decreaseOnes():
-  numData = plotRateEntry.get()
+  numData = temperatureSP.get()
   incData = str(float(numData)-1)
-  plotRateEntry.delete(0, "end")
-  plotRateEntry.insert(0, incData)
+  temperatureSP.delete(0, "end")
+  temperatureSP.insert(0, incData)
 
 def decreasePointOnes():
-  numData = plotRateEntry.get()
+  numData = temperatureSP.get()
   incData = str(float(numData)-0.1)
-  plotRateEntry.delete(0, "end")
-  plotRateEntry.insert(0, incData)
+  temperatureSP.delete(0, "end")
+  temperatureSP.insert(0, incData)
 
 def stopProgram():
   masterUI.destroy()
@@ -234,10 +260,10 @@ canvas.get_tk_widget().grid(row=1, column=1, columnspan=2, rowspan=10)
 # ----------------------------------------------------
 tk.Label(masterUI, text="Plot Rate Control").grid(row=1, column=3, columnspan=3)
 
-plotRateEntry = tk.Entry(masterUI)
-plotRateEntry.insert(0, '70')
-#plotRateEntry.bind('<Return>', lambda event: setPlotRateSlider())
-plotRateEntry.grid(row=2,column=3, columnspan=3)
+temperatureSP = tk.Entry(masterUI)
+temperatureSP.insert(0, '70')
+#temperatureSP.bind('<Return>', lambda event: setPlotRateSlider())
+temperatureSP.grid(row=2,column=3, columnspan=3)
 
 tensButtonInc = tk.Button(masterUI, text='+10', width=4, command=increaseTens)
 tensButtonInc.grid(row=3, column=3)
@@ -266,6 +292,9 @@ stopButton.grid(row=10, column=3, columnspan=3)
 # Create plot objects to hold data and manage plotting functions
 testDataPlot = PlotData(f, subplotTop)
 
-ani = animation.FuncAnimation(f, animatePlot, interval=1000)
+#tempController = TemperatureControl( float( temperatureSP.get() ) )
+tempController = TemperatureControl(21)
+
+ani = animation.FuncAnimation(f, AnimatePlot, interval=1000)
 
 masterUI.mainloop()
