@@ -1,3 +1,9 @@
+## Install jessie image from adafruit
+The Rasperry PiTFT 3.5" Plus Touch screen requires a different kernal. So download the image for that Linux distro from adafruit [website][adafruit_tft] and follow the instructions for burning a new image onto a SD card.
+
+## Setup static ip 
+
+
 ## Find what virtual envitonments are on the RPi
 * source ~/.profile
 * lsvirtualenv
@@ -39,3 +45,7 @@
 ## Colorscheme
 * color molokai
 *
+
+
+
+[adafruit_tft]: https://learn.adafruit.com/adafruit-pitft-3-dot-5-touch-screen-for-raspberry-pi/easy-install "Link to Adafruit PiTFT installation documentation"
