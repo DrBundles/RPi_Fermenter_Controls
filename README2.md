@@ -32,6 +32,31 @@ $ git config --global user.email johndoe@example.com
   $ sudo apt-get install vim
   ```
 
+# Install python packages
+* Install matplotlib
+
+  ```
+  $ sudo pip3 install matplotlib
+  ```
+
+# Install RPi.GPIO
+Already installed on RPi python3 distribution
+
+# Install W1ThermSensor
+* From their [website][w1therm]. Better instructions from Adafruit [here][ada_therm]
+
+
+* Check if there are any temp sensors with `ls -l /sys/bus/w1/devices/`
+
+* Edit `/boot/config.txt`
+* Add the line 'dtoverlay=w1-gpio'
+* Reboot the Pi
+
+    ```
+    $sudo modprobe w1-gpio
+    $sudo modprobe w1-therm
+    ```
+
 
 # Install virtualenvwrapper for python
 * [Tutorial](http://www.pyimagesearch.com/2015/02/23/install-opencv-and-python-on-your-raspberry-pi-2-and-b/) See step 7
@@ -132,3 +157,8 @@ $ git config --global user.email johndoe@example.com
 # OpenScale Setup Load Cell
 * Learn how to hook up [OpenScale](https://learn.sparkfun.com/tutorials/openscale-applications-and-hookup-guide?_ga=1.265964685.306549472.1478204359)
 * 
+
+
+
+[w1therm]:https://github.com/timofurrer/w1thermsensor
+[ada_therm]:https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20

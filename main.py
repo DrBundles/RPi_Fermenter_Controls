@@ -97,13 +97,14 @@ class TemperatureControl():
     """
 
     self.tempSetpoint = initTemp
-    self.lowOffset = lowTrigger     #Temperature offset needed to turn on heater
-    self.highOffset = highTrigger   #Temperature offset needed to turn on cooler
-    self.lowOffset = lowOffset      #Temperature overshoot of cooling
-    self.highOffset = highOffset    #Temperature overshoot of heating
-    self.tempBuffer = np.zeros(10)  #Ring buffer to hold temperature measurements
+    self.lowTrigger = lowTrigger       #Temperature offset needed to turn on heater
+    self.highTrigger = highTrigger     #Temperature offset needed to turn on cooler
+    self.lowOffset = lowOffset         #Temperature overshoot of cooling
+    self.highOffset = highOffset       #Temperature overshoot of heating
+    self.tempBuffer = np.zeros(10)     #Ring buffer to hold temperature measurements
     self.tempBuffer.fill(self.tempSetpoint)
-    self.heat_cool_FLAG = 1         #0: Cooling, 1: Heating
+    self.mean_temp = self.tempSetpoint #Start with mean temp equal to initial temp
+    self.heat_cool_FLAG = 1            #0: Cooling, 1: Heating
     # Setup temp sensors
     self.sensor = self.setup_temp_sensors()
     # Setup GPIO
@@ -125,36 +126,43 @@ class TemperatureControl():
   
   def standby_mode(self):
     # Turn both heating and cooling off
-    GPIO.output(coolingpin, GPIO.LOW)
-    GPIO.output(heatingpin, GPIO.LOW)
+    GPIO.output(self.coolingpin, GPIO.LOW)
+    GPIO.output(self.heatingpin, GPIO.LOW)
     self.heat_cool_FLAG = 'standby'
 
   def heat_on(self):
     # Turn off cooler
     # Turn on heater
-    GPIO.output(coolingpin, GPIO.LOW)
-    GPIO.output(heatingpin, GPIO.HIGH)
+    GPIO.output(self.coolingpin, GPIO.LOW)
+    GPIO.output(self.heatingpin, GPIO.HIGH)
     self.heat_cool_FLAG = 'heating'
 
   def cool_on(self):
     # Turn on cooler
     # Turn off heater
-    GPIO.output(coolingpin, GPIO.HIGH)
-    GPIO.output(heatingpin, GPIO.LOW)
+    GPIO.output(self.coolingpin, GPIO.HIGH)
+    GPIO.output(self.heatingpin, GPIO.LOW)
     self.heat_cool_FLAG = 'cooling'
 
-  def mean_temp(self):
+  def calc_mean_temp(self):
     self.mean_temp = np.mean(self.tempBuffer)
 
   def update_temp(self):
     # Get temperature value
-    tempVal = sensor.get_temperature()
+    tempVal = self.sensor.get_temperature()
     # Shift temperature buffer of index 9 is not index 0 
     self.tempBuffer = np.roll(self.tempBuffer, 1)
     # Push temperature value into ring buffer
     self.tempBuffer[0] = tempVal
 
+  def get_mean_temp(self):
+    # Update the temperature buffer, calc and return the average
+    self.update_temp()
+    self.calc_mean_temp()
+    return self.mean_temp
+
   def heat_cool_logic(self):
+    # Update the temperature 
     # Check if the system is in a state that requires heating, cooling or standby
     if self.mean_temp <= self.tempSetpoint - self.lowTrigger:
       # Turn on Heater
@@ -197,7 +205,11 @@ def AnimatePlot(frameNum):
   #testDataPlot.dataNew = [random.gauss(float(temperatureSP.get()), 1.4)]
 
   # Get temperature value
-  tempVal = sensor.get_temperature()
+  #tempVal = tempController.sensor.get_temperature()
+  tempVal = tempController.get_mean_temp()
+
+  # Run logic to control heater / cooler
+  tempController.heat_cool_logic()
 
   # Update temperature ring buffers
   #pid.update(tempVal)
