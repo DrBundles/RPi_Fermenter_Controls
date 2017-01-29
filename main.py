@@ -53,11 +53,14 @@ class PlotData():
     self.subplot = subplot_axes
     self.dataNew = [0]
     self.dataTest = [0] * 100
+    self.setpoint = [19]
+    self.dataSet  = [self.setpoint] * 100
     self.ymin = 0
     self.ymax = 50
 
     plt.subplot(self.subplot)
     self.lineDataTest = plt.plot(self.dataTest, 'rs', label='Plot Data')
+    self.lineDataSetpoint  = plt.plot(self.dataSet, 'bs', label='Setpoint')
     plt.ylim([self.ymin, self.ymax])
     #plt.legend(loc='upper left')
 
@@ -68,11 +71,16 @@ class PlotData():
     #self.dataTest.append(float(self.dataNew[0])) # Add new data to end of existing data array
     self.dataTest.append(float(self.dataNew)) # Add new data to end of existing data array
     del self.dataTest[0] # Drop the first array element
+    # Build setpoint line data as a straight line
+    self.dataSet  = [self.setpoint] * 100
+    # Plot data
     self.ymin = float(min(self.dataTest)-10)
     self.ymax = float(max(self.dataTest)+10)
     plt.ylim([self.ymin, self.ymax])
     self.lineDataTest[0].set_xdata(np.arange(len(self.dataTest)))
     self.lineDataTest[0].set_ydata(self.dataTest)
+    self.lineDataSetpoint[0].set_xdata(np.arange(len(self.dataSet)))
+    self.lineDataSetpoint[0].set_ydata(self.dataSet)
 
 
 
@@ -108,8 +116,8 @@ class TemperatureControl():
     # Setup temp sensors
     self.sensor = self.setup_temp_sensors()
     # Setup GPIO
-    self.heatingpin = 23            #Heating relay pin on gpio BCM-23, wiringPi-4
-    self.coolingpin = 24            #Cooling relay pin on gpio BCM-24, wiringPi-5
+    self.heatingpin = 23               #Heating relay pin on gpio BCM-23, wiringPi-4
+    self.coolingpin = 24               #Cooling relay pin on gpio BCM-24, wiringPi-5
     #pdb.set_trace()
     GPIO.setup(self.coolingpin, GPIO.OUT) #Cooling pin set to output
     GPIO.setup(self.heatingpin, GPIO.OUT) #Heating pin set to output
