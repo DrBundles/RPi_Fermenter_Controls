@@ -49,39 +49,52 @@ class PlotData():
       subplot_axes (int): Integer defining subplot
     """
 
-    self.fig = plot_fig
-    self.subplot = subplot_axes
-    self.dataNew = [0]
-    self.dataTest = [0] * 100
-    self.setpoint = [19]
-    self.dataSet  = [self.setpoint] * 100
-    self.ymin = 0
-    self.ymax = 50
+    self._fig = plot_fig
+    self._subplot = subplot_axes
+    self._dataNew = 0
+    self._dataTest = [0] * 100
+    self._setpoint = 19
+    self._dataSetpoint  = [self._setpoint] * 100
+    self._ymin = 0
+    self._ymax = 50
 
-    plt.subplot(self.subplot)
-    self.lineDataTest = plt.plot(self.dataTest, 'rs', label='Plot Data')
-    self.lineDataSetpoint  = plt.plot(self.dataSet, 'bs', label='Setpoint')
-    plt.ylim([self.ymin, self.ymax])
+    plt.subplot(self._subplot)
+    self._lineDataTest = plt.plot(self._dataTest, 'rs', label='Plot Data')
+    self._lineDataSetpoint  = plt.plot(self._dataSetpoint, 'bs', label='Setpoint')
+    plt.ylim([self._ymin, self._ymax])
     #plt.legend(loc='upper left')
 
   def updatePlotVals(self):
     """Update plot
     """
-    plt.subplot(self.subplot)
-    #self.dataTest.append(float(self.dataNew[0])) # Add new data to end of existing data array
-    self.dataTest.append(float(self.dataNew)) # Add new data to end of existing data array
-    del self.dataTest[0] # Drop the first array element
+    plt.subplot(self._subplot)
+    #self._dataTest.append(float(self._dataNew[0])) # Add new data to end of existing data array
+    self._dataTest.append(float(self._dataNew)) # Add new data to end of existing data array
+    del self._dataTest[0] # Drop the first array element
     # Build setpoint line data as a straight line
-    self.dataSet  = [self.setpoint] * 100
+    self._dataSetpoint  = [self._setpoint] * 100
     # Plot data
-    self.ymin = float(min(self.dataTest)-10)
-    self.ymax = float(max(self.dataTest)+10)
-    plt.ylim([self.ymin, self.ymax])
-    self.lineDataTest[0].set_xdata(np.arange(len(self.dataTest)))
-    self.lineDataTest[0].set_ydata(self.dataTest)
-    self.lineDataSetpoint[0].set_xdata(np.arange(len(self.dataSet)))
-    self.lineDataSetpoint[0].set_ydata(self.dataSet)
+    self._ymin = float(min(self._dataTest+self._dataSetpoint)-10)
+    self._ymax = float(max(self._dataTest+self._dataSetpoint)+10)
+    plt.ylim([self._ymin, self._ymax])
+    self._lineDataTest[0].set_xdata(np.arange(len(self._dataTest)))
+    self._lineDataTest[0].set_ydata(self._dataTest)
+    self._lineDataSetpoint[0].set_xdata(np.arange(len(self._dataSetpoint)))
+    self._lineDataSetpoint[0].set_ydata(self._dataSetpoint)
+    #print(self._dataSetpoint)
+    #pdb.set_trace()
 
+  @property
+  def setpoint(self):
+    return self._setpoint
+
+  @setpoint.setter
+  def setpoint(self, newsetpoint):
+    #if type(a) is float:
+    #  print("Change setpoint")
+    self._setpoint = newsetpoint
+    self.dataSetpoint = [self._setpoint] * 100
+    #  self._dataSetpoint  = [self._setpoint] * 100
 
 
 
@@ -104,24 +117,32 @@ class TemperatureControl():
       lowTrigger (float): 
     """
 
-    self.tempSetpoint = initTemp
-    self.lowTrigger = lowTrigger       #Temperature offset needed to turn on heater
-    self.highTrigger = highTrigger     #Temperature offset needed to turn on cooler
-    self.lowOffset = lowOffset         #Temperature overshoot of cooling
-    self.highOffset = highOffset       #Temperature overshoot of heating
-    self.tempBuffer = np.zeros(10)     #Ring buffer to hold temperature measurements
-    self.tempBuffer.fill(self.tempSetpoint)
-    self.mean_temp = self.tempSetpoint #Start with mean temp equal to initial temp
-    self.heat_cool_FLAG = 1            #0: Cooling, 1: Heating
+    self._tempSetpoint = initTemp
+    self._lowTrigger = lowTrigger       #Temperature offset needed to turn on heater
+    self._highTrigger = highTrigger     #Temperature offset needed to turn on cooler
+    self._lowOffset = lowOffset         #Temperature overshoot of cooling
+    self._highOffset = highOffset       #Temperature overshoot of heating
+    self._tempBuffer = np.zeros(10)     #Ring buffer to hold temperature measurements
+    self._tempBuffer.fill(self._tempSetpoint)
+    self._mean_temp = self._tempSetpoint #Start with mean temp equal to initial temp
+    self._heat_cool_FLAG = 1            #0: Cooling, 1: Heating
     # Setup temp sensors
-    self.sensor = self.setup_temp_sensors()
+    self._sensor = self.setup_temp_sensors()
     # Setup GPIO
-    self.heatingpin = 23               #Heating relay pin on gpio BCM-23, wiringPi-4
-    self.coolingpin = 24               #Cooling relay pin on gpio BCM-24, wiringPi-5
+    self._heatingpin = 23               #Heating relay pin on gpio BCM-23, wiringPi-4
+    self._coolingpin = 24               #Cooling relay pin on gpio BCM-24, wiringPi-5
     #pdb.set_trace()
-    GPIO.setup(self.coolingpin, GPIO.OUT) #Cooling pin set to output
-    GPIO.setup(self.heatingpin, GPIO.OUT) #Heating pin set to output
+    GPIO.setup(self._coolingpin, GPIO.OUT) #Cooling pin set to output
+    GPIO.setup(self._heatingpin, GPIO.OUT) #Heating pin set to output
     self.standby_mode()
+
+  @property
+  def tempSetpoint(self):
+    return self._tempSetpoint
+
+  @tempSetpoint.setter
+  def tempSetpoint(self, newsetpoint):
+    self._tempSetpoint = newsetpoint
 
   def setup_temp_sensors(self):
     # Get ID of DS18B20 sensor(s)
@@ -134,65 +155,70 @@ class TemperatureControl():
   
   def standby_mode(self):
     # Turn both heating and cooling off
-    GPIO.output(self.coolingpin, GPIO.LOW)
-    GPIO.output(self.heatingpin, GPIO.LOW)
-    self.heat_cool_FLAG = 'standby'
+    GPIO.output(self._coolingpin, GPIO.LOW)
+    GPIO.output(self._heatingpin, GPIO.LOW)
+    self._heat_cool_FLAG = 'standby'
 
   def heat_on(self):
     # Turn off cooler
     # Turn on heater
-    GPIO.output(self.coolingpin, GPIO.LOW)
-    GPIO.output(self.heatingpin, GPIO.HIGH)
-    self.heat_cool_FLAG = 'heating'
+    GPIO.output(self._coolingpin, GPIO.LOW)
+    GPIO.output(self._heatingpin, GPIO.HIGH)
+    self._heat_cool_FLAG = 'heating'
 
   def cool_on(self):
     # Turn on cooler
     # Turn off heater
-    GPIO.output(self.coolingpin, GPIO.HIGH)
-    GPIO.output(self.heatingpin, GPIO.LOW)
-    self.heat_cool_FLAG = 'cooling'
+    GPIO.output(self._coolingpin, GPIO.HIGH)
+    GPIO.output(self._heatingpin, GPIO.LOW)
+    self._heat_cool_FLAG = 'cooling'
 
   def calc_mean_temp(self):
-    self.mean_temp = np.mean(self.tempBuffer)
+    self._mean_temp = np.mean(self._tempBuffer)
 
   def update_temp(self):
     # Get temperature value
-    tempVal = self.sensor.get_temperature()
+    tempVal = self._sensor.get_temperature()
     # Shift temperature buffer of index 9 is not index 0 
-    self.tempBuffer = np.roll(self.tempBuffer, 1)
+    self._tempBuffer = np.roll(self._tempBuffer, 1)
     # Push temperature value into ring buffer
-    self.tempBuffer[0] = tempVal
+    self._tempBuffer[0] = tempVal
 
   def get_mean_temp(self):
     # Update the temperature buffer, calc and return the average
     self.update_temp()
     self.calc_mean_temp()
-    return self.mean_temp
+    return self._mean_temp
 
   def heat_cool_logic(self):
     # Update the temperature 
     # Check if the system is in a state that requires heating, cooling or standby
-    if self.mean_temp <= self.tempSetpoint - self.lowTrigger:
+    if self._mean_temp <= self._tempSetpoint - self._lowTrigger:
       # Turn on Heater
       self.heat_on()
-    elif self.mean_temp >= self.tempSetpoint + self.highTrigger:
+      heatOnOff.set('heat')
+    elif self._mean_temp >= self._tempSetpoint + self._highTrigger:
       # Turn on Cooler
       self.cool_on()
-    elif self.mean_temp <= self.tempSetpoint - self.lowOffset and self.heat_cool_FLAG is 'cooling' :
+      heatOnOff.set('cool')
+    elif self._mean_temp <= self._tempSetpoint - self._lowOffset and self._heat_cool_FLAG is 'cooling' :
       # Temperature has cooled to a point lower to the setpoint minus the offset
       # Place system into standby mode
       self.standby_mode()
-    elif self.mean_temp >= self.tempSetpoint + self.highOffset and self.heat_cool_FLAG is 'heating' :
+      heatOnOff.set('hold')
+    elif self._mean_temp >= self._tempSetpoint + self._highOffset and self._heat_cool_FLAG is 'heating' :
       # Temperature has heated to a point higher to the setpoint plus the offset
       # Place system into standby mode
       self.standby_mode()
+      heatOnOff.set('hold')
     else:
       pass
 
   def updatePlotVals(self):
     """Update plot
     """
-    self.dataTest.append(float(self.dataNew)) # Add new data to end of existing data array
+    self._dataTest.append(float(self._dataNew)) # Add new data to end of existing data array
+    testDataPlot.setpoint=float(temperatureSP.get())
 
 
 
@@ -222,9 +248,15 @@ def AnimatePlot(frameNum):
   # Update temperature ring buffers
   #pid.update(tempVal)
 
-  testDataPlot.dataNew = tempVal
+
+  testDataPlot._dataNew = tempVal
   testDataPlot.updatePlotVals()
   plt.draw()
+
+def updateTempSetpoint(newSetpoint):
+  # Update setpoint values for both the controller and plot objects
+  tempController.tempSetpoint=float(temperatureSP.get())
+  testDataPlot.setpoint=float(temperatureSP.get())
 
 
 def increaseTens():
@@ -232,36 +264,42 @@ def increaseTens():
   incData = str(float(numData)+10)
   temperatureSP.delete(0, "end")
   temperatureSP.insert(0, incData)
+  updateTempSetpoint(float(temperatureSP.get()))
 
 def increaseOnes():
   numData = temperatureSP.get()
   incData = str(float(numData)+1)
   temperatureSP.delete(0, "end")
   temperatureSP.insert(0, incData)
+  updateTempSetpoint(float(temperatureSP.get()))
 
 def increasePointOnes():
   numData = temperatureSP.get()
   incData = str(float(numData)+0.1)
   temperatureSP.delete(0, "end")
   temperatureSP.insert(0, incData)
+  updateTempSetpoint(float(temperatureSP.get()))
 
 def decreaseTens():
   numData = temperatureSP.get()
   incData = str(float(numData)-10)
   temperatureSP.delete(0, "end")
   temperatureSP.insert(0, incData)
+  updateTempSetpoint(float(temperatureSP.get()))
 
 def decreaseOnes():
   numData = temperatureSP.get()
   incData = str(float(numData)-1)
   temperatureSP.delete(0, "end")
   temperatureSP.insert(0, incData)
+  updateTempSetpoint(float(temperatureSP.get()))
 
 def decreasePointOnes():
   numData = temperatureSP.get()
   incData = str(float(numData)-0.1)
   temperatureSP.delete(0, "end")
   temperatureSP.insert(0, incData)
+  updateTempSetpoint(float(temperatureSP.get()))
 
 def stopProgram():
   masterUI.destroy()
@@ -281,7 +319,7 @@ canvas.get_tk_widget().grid(row=1, column=1, columnspan=2, rowspan=10)
 tk.Label(masterUI, text="Plot Rate Control").grid(row=1, column=3, columnspan=3)
 
 temperatureSP = tk.Entry(masterUI)
-temperatureSP.insert(0, '70')
+temperatureSP.insert(0, '20')
 #temperatureSP.bind('<Return>', lambda event: setPlotRateSlider())
 temperatureSP.grid(row=2,column=3, columnspan=3)
 
@@ -302,6 +340,15 @@ pointOnesButtonInc.grid(row=3, column=5)
 
 pointOnesButtonDec = tk.Button(masterUI, text='-0.1', width=4, command=decreasePointOnes)
 pointOnesButtonDec.grid(row=4, column=5)
+
+heatOnOff = tk.StringVar()
+heatOnOff.set('hold')
+heatRadiobuttonHeat = tk.Radiobutton(masterUI, text="Heat", value='heat', variable=heatOnOff)
+heatRadiobuttonCool = tk.Radiobutton(masterUI, text="Cool", value='cool', variable=heatOnOff)
+heatRadiobuttonHold = tk.Radiobutton(masterUI, text="Hold", value='hold', variable=heatOnOff)
+heatRadiobuttonHeat.grid(row=6, column=3)
+heatRadiobuttonCool.grid(row=7, column=3)
+heatRadiobuttonHold.grid(row=8, column=3)
 
 stopButton = tk.Button(masterUI, text="Stop", command=stopProgram)
 stopButton.grid(row=10, column=3, columnspan=3)
